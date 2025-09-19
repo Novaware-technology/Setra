@@ -1,0 +1,71 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Modelo para os perfis de usuário (roles)
+model Role {
+  id        Int        @id @default(autoincrement())
+  name      String     @unique // 'admin', 'support', 'operador'
+  userRoles UserRole[]
+}
+
+// Tabela que armazena as informações dos usuários
+// O ID aqui deve ser o mesmo do usuário no Supabase Auth
+model Profile {
+  id              String          @id @default(uuid())
+  email           String          @unique
+  name            String?
+  selected_theme  String          @default("light")
+  createdAt       DateTime        @default(now())
+  userRoles       UserRole[]
+  sentMessages    Message[]       @relation("Sender")
+  participations  Participant[]
+  passwordHash    String
+}
+
+// Tabela de ligação para atribuir perfis a usuários (muitos-para-muitos)
+model UserRole {
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  profileId String
+  role      Role    @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  roleId    Int
+
+  @@id([profileId, roleId])
+}
+
+// Modelo para uma conversa
+model Conversation {
+  id            String        @id @default(uuid())
+  createdAt     DateTime      @default(now())
+  participants  Participant[]
+  messages      Message[]
+}
+
+// Tabela de ligação para saber quem participa de qual conversa
+model Participant {
+  profile        Profile      @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  profileId      String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  conversationId String
+
+  @@id([profileId, conversationId])
+}
+
+// Modelo para uma mensagem individual
+model Message {
+  id             String       @id @default(uuid())
+  content        String
+  createdAt      DateTime     @default(now())
+  sender         Profile      @relation("Sender", fields: [senderId], references: [id], onDelete: Cascade)
+  senderId       String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  conversationId String
+}

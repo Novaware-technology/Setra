@@ -1,0 +1,56 @@
+# ================================================================= #
+#  ARQUIVOS DE DEPENDÊNCIAS E PACOTES
+#  Nunca versionar a pasta node_modules. Ela é recriada com 'pnpm install'.
+# ================================================================= #
+node_modules
+**/node_modules
+
+# ================================================================= #
+#  ARQUIVOS DE AMBIENTE E SEGREDOS
+#  ESSENCIAL PARA SEGURANÇA! Contém senhas, chaves de API, etc.
+# ================================================================= #
+.env
+.env.*
+!.env.example
+
+# ================================================================= #
+#  PASTAS DE BUILD E CACHE (GERADAS AUTOMATICAMENTE)
+# ================================================================= #
+# NestJS (backend)
+packages/backend/dist
+# Next.js (frontend)
+packages/frontend/.next
+packages/frontend/out
+# Cache de builds
+.turbo
+
+# ================================================================= #
+#  LOGS DE ERRO E DEBUG
+# ================================================================= #
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ================================================================= #
+#  ARQUIVOS DE SISTEMA OPERACIONAL
+# ================================================================= #
+# macOS
+.DS_Store
+# Windows
+Thumbs.db
+
+# ================================================================= #
+#  ARQUIVOS DE CONFIGURAÇÃO DE IDEs (EDITORES DE CÓDIGO)
+# ================================================================= #
+# VSCode
+.vscode/
+# JetBrains (WebStorm, etc.)
+.idea/
+
+# ================================================================= #
+#  ARQUIVOS DE TESTE (OPCIONAL, MAS COMUM)
+# ================================================================= #
+coverage
+.nyc_output
