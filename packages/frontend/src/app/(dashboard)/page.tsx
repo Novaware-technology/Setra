@@ -22,7 +22,7 @@ export default function Page() {
           <div className="px-4 lg:px-6 pt-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <h1 className="text-xl font-semibold">Dashboard</h1>
+                {/* <h1 className="text-xl font-semibold">Dashboard</h1> */}
                 <Badge variant="outline" className="text-xs">
                   Atualização automática
                 </Badge>
