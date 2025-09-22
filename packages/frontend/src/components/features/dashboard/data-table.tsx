@@ -125,6 +125,11 @@ export const schema = z.object({
   name: z.string(),
   selected_theme: z.string(),
   createdAt: z.string(),
+  userRoles: z.array(z.object({
+    role: z.object({
+      name: z.string(),
+    }),
+  })),
 })
 
 // Create a separate component for the drag handle
@@ -235,18 +240,21 @@ export function DataTable({
       ),
     },
     {
-      accessorKey: "selected_theme",
-      header: "Tema",
-      cell: ({ row }) => (
-        <Badge variant="outline" className="text-muted-foreground px-1.5">
-          {row.original.selected_theme === "light" ? (
-            <IconCircleCheckFilled className="fill-yellow-500 dark:fill-yellow-400" />
-          ) : (
-            <IconCircleCheckFilled className="fill-slate-500 dark:fill-slate-400" />
-          )}
-          {row.original.selected_theme}
-        </Badge>
-      ),
+      accessorKey: "userRoles",
+      header: "Função",
+      cell: ({ row }) => {
+        const roles = row.original.userRoles?.map(ur => ur.role.name) || [];
+        const primaryRole = roles[0] || 'N/A';
+
+        return (
+          <Badge 
+            variant="outline" 
+            className="px-2 py-1 text-xs font-medium text-muted-foreground"
+          >
+            {primaryRole}
+          </Badge>
+        );
+      },
     },
     {
       accessorKey: "createdAt",
@@ -473,6 +481,11 @@ export function DataTable({
         name: newUserData.name,
         selected_theme: 'light',
         createdAt: new Date().toISOString(),
+        userRoles: [{
+          role: {
+            name: newUserData.role,
+          },
+        }],
       }
       
       setData(prevData => [newUser, ...prevData])

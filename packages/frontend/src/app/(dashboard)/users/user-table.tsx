@@ -12,6 +12,11 @@ interface User {
   email: string;
   selected_theme: string;
   createdAt: string;
+  userRoles: {
+    role: {
+      name: string;
+    };
+  }[];
 }
 
 async function fetchUsers(): Promise<User[]> {

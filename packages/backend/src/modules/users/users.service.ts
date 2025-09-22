@@ -14,6 +14,15 @@ export class UsersService {
     name: true,
     selected_theme: true,
     createdAt: true,
+    userRoles: {
+      include: {
+        role: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    },
   };
 
   async create(createUserDto: CreateUserDto) {
