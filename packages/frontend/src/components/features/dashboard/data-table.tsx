@@ -195,7 +195,7 @@ export function DataTable({
   })
   const [editingUser, setEditingUser] = React.useState<z.infer<typeof schema> | null>(null)
   const [isDrawerOpen, setIsDrawerOpen] = React.useState(false)
-  const [editedData, setEditedData] = React.useState<Partial<z.infer<typeof schema>>>({})
+  const [editedData, setEditedData] = React.useState<Partial<z.infer<typeof schema> & { role?: string }>>({})
   const [isDialogOpen, setIsDialogOpen] = React.useState(false)
   const [newUserData, setNewUserData] = React.useState({
     email: '',
@@ -349,8 +349,23 @@ export function DataTable({
     setEditedData({}) // Limpa dados editados
   }
 
-  function handleFieldChange(field: keyof z.infer<typeof schema>, value: string) {
+  function handleFieldChange(field: keyof z.infer<typeof schema> | 'role', value: string) {
     if (!editingUser) return
+    
+    // Tratamento especial para o campo role
+    if (field === 'role') {
+      const currentRole = editingUser.userRoles?.[0]?.role.name || ''
+      if (value !== currentRole) {
+        setEditedData(prev => ({ ...prev, role: value }))
+      } else {
+        setEditedData(prev => {
+          const newData = { ...prev }
+          delete newData.role
+          return newData
+        })
+      }
+      return
+    }
     
     // Só adiciona ao editedData se o valor for diferente do original
     if (value !== editingUser[field]) {
@@ -380,11 +395,25 @@ export function DataTable({
 
       // Atualiza os dados locais
       setData(prevData => 
-        prevData.map(user => 
-          user.id === editingUser.id 
-            ? { ...user, ...editedData }
-            : user
-        )
+        prevData.map(user => {
+          if (user.id === editingUser.id) {
+            const updatedUser = { ...user, ...editedData };
+            
+            // Se o campo role foi alterado, atualiza userRoles
+            if (editedData.role) {
+              updatedUser.userRoles = [{
+                role: {
+                  name: editedData.role
+                }
+              }];
+              // Remove o campo role do objeto final
+              delete updatedUser.role;
+            }
+            
+            return updatedUser;
+          }
+          return user;
+        })
       )
 
       toast.success("Usuário atualizado com sucesso!")
@@ -793,17 +822,18 @@ export function DataTable({
                 />
               </div>
               <div className="flex flex-col gap-3">
-                <Label htmlFor="edit-selected_theme">Tema</Label>
+                <Label htmlFor="edit-role">Função</Label>
                 <Select 
-                  defaultValue={editingUser.selected_theme}
-                  onValueChange={(value) => handleFieldChange('selected_theme', value)}
+                  defaultValue={editingUser.userRoles?.[0]?.role.name || ''}
+                  onValueChange={(value) => handleFieldChange('role', value)}
                 >
-                  <SelectTrigger id="edit-selected_theme" className="w-full">
-                    <SelectValue placeholder="Selecione um tema" />
+                  <SelectTrigger id="edit-role" className="w-full">
+                    <SelectValue placeholder="Selecione uma função" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="light">Claro</SelectItem>
-                    <SelectItem value="dark">Escuro</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value="support">Support</SelectItem>
+                    <SelectItem value="operator">Operator</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -962,14 +992,15 @@ function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
               <Input id="email" defaultValue={item.email} type="email" />
             </div>
             <div className="flex flex-col gap-3">
-              <Label htmlFor="selected_theme">Tema</Label>
-              <Select defaultValue={item.selected_theme}>
-                <SelectTrigger id="selected_theme" className="w-full">
-                  <SelectValue placeholder="Selecione um tema" />
+              <Label htmlFor="role">Função</Label>
+              <Select defaultValue={item.userRoles?.[0]?.role.name || ''}>
+                <SelectTrigger id="role" className="w-full">
+                  <SelectValue placeholder="Selecione uma função" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="light">Claro</SelectItem>
-                  <SelectItem value="dark">Escuro</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="support">Support</SelectItem>
+                  <SelectItem value="operator">Operator</SelectItem>
                 </SelectContent>
               </Select>
             </div>
