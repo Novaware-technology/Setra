@@ -54,6 +54,7 @@ import { toast } from "sonner"
 import { z } from "zod"
 
 import { useIsMobile } from "@/hooks/use-mobile"
+import { api } from "@/lib/api"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -179,6 +180,7 @@ export function DataTable({
   })
   const [editingUser, setEditingUser] = React.useState<z.infer<typeof schema> | null>(null)
   const [isDrawerOpen, setIsDrawerOpen] = React.useState(false)
+  const [editedData, setEditedData] = React.useState<Partial<z.infer<typeof schema>>>({})
   const sortableId = React.useId()
   const sensors = useSensors(
     useSensor(MouseSensor, {}),
@@ -332,12 +334,60 @@ export function DataTable({
 
   function handleEditUser(user: z.infer<typeof schema>) {
     setEditingUser(user)
+    setEditedData({}) // Limpa dados editados
     setIsDrawerOpen(true)
   }
 
   function handleCloseDrawer() {
     setIsDrawerOpen(false)
     setEditingUser(null)
+    setEditedData({}) // Limpa dados editados
+  }
+
+  function handleFieldChange(field: keyof z.infer<typeof schema>, value: string) {
+    if (!editingUser) return
+    
+    // Só adiciona ao editedData se o valor for diferente do original
+    if (value !== editingUser[field]) {
+      setEditedData(prev => ({ ...prev, [field]: value }))
+    } else {
+      // Remove o campo se voltou ao valor original
+      setEditedData(prev => {
+        const newData = { ...prev }
+        delete newData[field]
+        return newData
+      })
+    }
+  }
+
+  async function handleSaveUser() {
+    if (!editingUser || Object.keys(editedData).length === 0) {
+      toast.success("Nenhuma alteração detectada!")
+      handleCloseDrawer()
+      return
+    }
+
+    try {
+      await api(`/users/${editingUser.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(editedData),
+      })
+
+      // Atualiza os dados locais
+      setData(prevData => 
+        prevData.map(user => 
+          user.id === editingUser.id 
+            ? { ...user, ...editedData }
+            : user
+        )
+      )
+
+      toast.success("Usuário atualizado com sucesso!")
+      handleCloseDrawer()
+    } catch (error) {
+      console.error('Erro ao atualizar usuário:', error)
+      toast.error("Erro ao atualizar usuário. Tente novamente.")
+    }
   }
 
   return (
@@ -511,15 +561,27 @@ export function DataTable({
             <form className="flex flex-col gap-4">
               <div className="flex flex-col gap-3">
                 <Label htmlFor="edit-name">Nome</Label>
-                <Input id="edit-name" defaultValue={editingUser.name} />
+                <Input 
+                  id="edit-name" 
+                  defaultValue={editingUser.name}
+                  onChange={(e) => handleFieldChange('name', e.target.value)}
+                />
               </div>
               <div className="flex flex-col gap-3">
                 <Label htmlFor="edit-email">Email</Label>
-                <Input id="edit-email" defaultValue={editingUser.email} type="email" />
+                <Input 
+                  id="edit-email" 
+                  defaultValue={editingUser.email} 
+                  type="email"
+                  onChange={(e) => handleFieldChange('email', e.target.value)}
+                />
               </div>
               <div className="flex flex-col gap-3">
                 <Label htmlFor="edit-selected_theme">Tema</Label>
-                <Select defaultValue={editingUser.selected_theme}>
+                <Select 
+                  defaultValue={editingUser.selected_theme}
+                  onValueChange={(value) => handleFieldChange('selected_theme', value)}
+                >
                   <SelectTrigger id="edit-selected_theme" className="w-full">
                     <SelectValue placeholder="Selecione um tema" />
                   </SelectTrigger>
@@ -540,12 +602,11 @@ export function DataTable({
             </form>
           </div>
           <DrawerFooter>
-            <Button onClick={() => {
-              // Aqui você pode implementar a lógica de salvamento
-              toast.success("Usuário atualizado com sucesso!")
-              handleCloseDrawer()
-            }}>
-              Salvar
+            <Button 
+              onClick={handleSaveUser}
+              disabled={Object.keys(editedData).length === 0}
+            >
+              {Object.keys(editedData).length > 0 ? 'Salvar Alterações' : 'Nenhuma Alteração'}
             </Button>
             <Button variant="outline" onClick={handleCloseDrawer}>
               Cancelar
