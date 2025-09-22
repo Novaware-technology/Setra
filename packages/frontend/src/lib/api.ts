@@ -48,8 +48,26 @@ export class ApiError extends Error {
       if (response.status === 204) {
         return;
       }
-  
-      return response.json();
+
+      // Verifica se há conteúdo na resposta antes de tentar fazer parse do JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        return;
+      }
+
+      // Verifica se há conteúdo no corpo da resposta
+      const text = await response.text();
+      if (!text || text.trim() === '') {
+        return;
+      }
+
+      // Tenta fazer parse do JSON
+      try {
+        return JSON.parse(text);
+      } catch (parseError) {
+        console.warn('Erro ao fazer parse do JSON:', parseError);
+        return;
+      }
     } catch (error) {
       // Re-lança o erro para que possa ser tratado por quem chamou a função
       console.error('Erro na chamada da API:', error);

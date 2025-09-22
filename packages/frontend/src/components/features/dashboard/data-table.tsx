@@ -28,6 +28,8 @@ import {
   IconChevronsRight,
   IconCircleCheckFilled,
   IconDotsVertical,
+  IconEye,
+  IconEyeOff,
   IconGripVertical,
   IconLayoutColumns,
   IconLoader,
@@ -55,6 +57,7 @@ import { z } from "zod"
 
 import { useIsMobile } from "@/hooks/use-mobile"
 import { api } from "@/lib/api"
+import { useAuth } from "@/contexts/uth-context"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -63,6 +66,16 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart"
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 import {
   Drawer,
   DrawerClose,
@@ -178,6 +191,17 @@ export function DataTable({
   const [editingUser, setEditingUser] = React.useState<z.infer<typeof schema> | null>(null)
   const [isDrawerOpen, setIsDrawerOpen] = React.useState(false)
   const [editedData, setEditedData] = React.useState<Partial<z.infer<typeof schema>>>({})
+  const [isDialogOpen, setIsDialogOpen] = React.useState(false)
+  const [newUserData, setNewUserData] = React.useState({
+    email: '',
+    name: '',
+    password: '',
+    role: '' as 'admin' | 'support' | 'operator' | ''
+  })
+  const [showPassword, setShowPassword] = React.useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false)
+  const [userToDelete, setUserToDelete] = React.useState<z.infer<typeof schema> | null>(null)
+  const { user } = useAuth()
   const sortableId = React.useId()
   const sensors = useSensors(
     useSensor(MouseSensor, {}),
@@ -255,7 +279,12 @@ export function DataTable({
               Editar
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem variant="destructive">Excluir</DropdownMenuItem>
+            <DropdownMenuItem 
+              variant="destructive" 
+              onClick={() => handleDeleteUser(row.original)}
+            >
+              Excluir
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       ),
@@ -358,6 +387,115 @@ export function DataTable({
     }
   }
 
+  function handleNewUserFieldChange(field: keyof typeof newUserData, value: string) {
+    setNewUserData(prev => ({ ...prev, [field]: value }))
+  }
+
+  function handleDeleteUser(user: z.infer<typeof schema>) {
+    setUserToDelete(user)
+    setIsDeleteDialogOpen(true)
+  }
+
+  function handleCancelDelete() {
+    setUserToDelete(null)
+    setIsDeleteDialogOpen(false)
+  }
+
+  async function handleConfirmDelete() {
+    if (!userToDelete) return
+
+    try {
+      console.log('Deletando usuário:', userToDelete.id)
+      const deleteResponse = await api(`/users/${userToDelete.id}`, {
+        method: 'DELETE',
+      })
+
+      console.log('Resposta da deleção:', deleteResponse)
+
+      // Busca a lista atualizada de usuários
+      const updatedUsers = await api('/users')
+      setData(updatedUsers)
+      
+      // Mostra o toast de sucesso
+      toast.success(`${userToDelete.name} deletado com sucesso`)
+      
+      // Fecha o dialog e limpa o estado
+      setUserToDelete(null)
+      setIsDeleteDialogOpen(false)
+      
+    } catch (error) {
+      console.error('Erro ao deletar usuário:', error)
+      
+      // Captura a mensagem específica da API
+      let errorMessage = "Erro ao deletar usuário. Tente novamente."
+      
+      if (error instanceof Error) {
+        errorMessage = error.message
+      }
+      
+      toast.error(errorMessage)
+    }
+  }
+
+  function handleOpenDialog() {
+    // Reseta o formulário sempre que abrir o dialog
+    setNewUserData({
+      email: '',
+      name: '',
+      password: '',
+      role: ''
+    })
+    setShowPassword(false)
+    setIsDialogOpen(true)
+  }
+
+  async function handleCreateUser() {
+    if (!newUserData.email || !newUserData.name || !newUserData.password) {
+      toast.error("Preencha todos os campos obrigatórios")
+      return
+    }
+
+    try {
+      const token = localStorage.getItem('authToken')
+      const response = await api('/users', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newUserData),
+      })
+
+      // Adiciona o novo usuário aos dados locais
+      const newUser = {
+        id: response.id,
+        email: newUserData.email,
+        name: newUserData.name,
+        selected_theme: 'light',
+        createdAt: new Date().toISOString(),
+      }
+      
+      setData(prevData => [newUser, ...prevData])
+      
+      // Mostra o toast de sucesso
+      toast.success(`${newUserData.name} criado com sucesso`)
+      
+      // Limpa o formulário e fecha o dialog
+      setNewUserData({
+        email: '',
+        name: '',
+        password: '',
+        role: ''
+      })
+      setShowPassword(false)
+      setIsDialogOpen(false)
+      
+    } catch (error) {
+      console.error('Erro ao criar usuário:', error)
+      toast.error("Erro ao criar usuário. Tente novamente.")
+    }
+  }
+
   return (
     <>
     <Tabs
@@ -369,6 +507,107 @@ export function DataTable({
         value="outline"
         className="relative flex flex-col gap-4 overflow-auto px-4 lg:px-6"
       >
+
+        {/* Dialog no canto superior direito */}
+        <div className="flex justify-end">
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="flex items-center gap-2" onClick={handleOpenDialog}>
+                <IconPlus className="h-4 w-4" />
+                Novo Usuário
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Criar Novo Usuário</DialogTitle>
+                <DialogDescription>
+                  Adicione um novo usuário ao sistema. Preencha os dados abaixo.
+                </DialogDescription>
+              </DialogHeader>
+              <form autoComplete="off" className="grid gap-4 py-4">
+                <div className="grid gap-3">
+                  <Label htmlFor="new-name">Nome</Label>
+                  <Input 
+                    id="new-name" 
+                    placeholder="Nome"
+                    value={newUserData.name}
+                    autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    spellCheck="false"
+                    onChange={(e) => handleNewUserFieldChange('name', e.target.value)}
+                  />
+                </div>
+                <div className="grid gap-3">
+                  <Label htmlFor="new-email">Email</Label>
+                  <Input 
+                    id="new-email" 
+                    type="email" 
+                    placeholder="Email"
+                    value={newUserData.email}
+                    autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    spellCheck="false"
+                    onChange={(e) => handleNewUserFieldChange('email', e.target.value)}
+                  />
+                </div>
+                <div className="grid gap-3">
+                  <Label htmlFor="new-password">Senha</Label>
+                  <div className="relative">
+                    <Input 
+                      id="new-password" 
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Senha"
+                      value={newUserData.password}
+                      autoComplete="new-password"
+                      autoCorrect="off"
+                      autoCapitalize="off"
+                      spellCheck="false"
+                      onChange={(e) => handleNewUserFieldChange('password', e.target.value)}
+                      className="pr-10"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? (
+                        <IconEyeOff className="h-4 w-4" />
+                      ) : (
+                        <IconEye className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+                <div className="grid gap-3">
+                  <Label htmlFor="new-role">Função</Label>
+                  <Select 
+                    onValueChange={(value) => handleNewUserFieldChange('role', value)}
+                  >
+                    <SelectTrigger id="new-role" className="w-full">
+                      <SelectValue placeholder="Selecione uma função" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="admin">Admin</SelectItem>
+                      <SelectItem value="support">Support</SelectItem>
+                      <SelectItem value="operator">Operator</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </form>
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button variant="outline">Cancelar</Button>
+                </DialogClose>
+                <Button onClick={handleCreateUser}>Criar Usuário</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+        
         <div className="overflow-hidden rounded-lg border">
           <DndContext
             collisionDetection={closestCenter}
@@ -579,6 +818,28 @@ export function DataTable({
         </DrawerContent>
       </Drawer>
     )}
+
+    {/* Dialog de Confirmação de Deleção */}
+    <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Confirmar Exclusão</DialogTitle>
+          <DialogDescription>
+            Tem certeza que deseja excluir o usuário <strong>{userToDelete?.name}</strong>?
+            <br />
+            Esta ação não pode ser desfeita.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" onClick={handleCancelDelete}>
+            Cancelar
+          </Button>
+          <Button variant="destructive" onClick={handleConfirmDelete}>
+            Confirmar Exclusão
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
     </>
   )
 }

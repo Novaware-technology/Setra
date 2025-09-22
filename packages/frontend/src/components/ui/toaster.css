@@ -1,0 +1,29 @@
+/* Estilos personalizados para o Toaster */
+[data-sonner-toaster] {
+  --success-bg: hsl(142, 76%, 95%);
+  --success-text: hsl(142, 76%, 20%);
+  --success-border: hsl(142, 76%, 50%);
+  --error-bg: hsl(0, 84%, 95%);
+  --error-text: hsl(0, 84%, 20%);
+  --error-border: hsl(0, 84%, 50%);
+}
+
+[data-sonner-toast][data-type="success"] {
+  background-color: var(--success-bg) !important;
+  color: var(--success-text) !important;
+  border: 1px solid var(--success-border) !important;
+}
+
+[data-sonner-toast][data-type="error"] {
+  background-color: var(--error-bg) !important;
+  color: var(--error-text) !important;
+  border: 1px solid var(--error-border) !important;
+}
+
+[data-sonner-toast][data-type="success"] [data-icon] {
+  color: var(--success-border) !important;
+}
+
+[data-sonner-toast][data-type="error"] [data-icon] {
+  color: var(--error-border) !important;
+}
