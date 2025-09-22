@@ -4,12 +4,14 @@ import { AppService } from './app.service';
 import { PrismaModule } from './shared/prisma/prisma.module';
 import { UsersModule } from './modules/users/users.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { ConversationsModule } from './modules/conversations/conversations.module';
 
 @Module({
   imports: [
     PrismaModule, 
     UsersModule, 
     AuthModule,
+    ConversationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

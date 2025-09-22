@@ -1,5 +1,4 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// Arquivo: packages/backend/prisma/schema.prisma
 
 generator client {
   provider = "prisma-client-js"
@@ -13,59 +12,72 @@ datasource db {
 // Modelo para os perfis de usuário (roles)
 model Role {
   id        Int        @id @default(autoincrement())
-  name      String     @unique // 'admin', 'support', 'operator'
+  name      String     @unique // 'admin', 'support', 'operador'
   userRoles UserRole[]
 }
 
-// Tabela que armazena as informações dos usuários
-// O ID aqui deve ser o mesmo do usuário no Supabase Auth
+// Tabela para os perfis de usuários da plataforma (operadores, admins, etc.)
 model Profile {
   id              String          @id @default(uuid())
   email           String          @unique
   name            String?
   selected_theme  String          @default("light")
   createdAt       DateTime        @default(now())
-  userRoles       UserRole[]
-  sentMessages    Message[]       @relation("Sender")
-  participations  Participant[]
   passwordHash    String
+  userRoles       UserRole[]
+
+  // Relações atualizadas para o novo modelo de chat
+  sentMessages    Message[]      @relation("OperatorSentMessages")
+  conversations   Conversation[] @relation("OperatorConversations")
 }
 
 // Tabela de ligação para atribuir perfis a usuários (muitos-para-muitos)
 model UserRole {
-  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
   profileId String
-  role      Role    @relation(fields: [roleId], references: [id], onDelete: Cascade)
   roleId    Int
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  role      Role    @relation(fields: [roleId], references: [id], onDelete: Cascade)
 
   @@id([profileId, roleId])
 }
 
-// Modelo para uma conversa
+
+// ======================================================= //
+// ======== MODELOS FINAIS PARA LÓGICA DE CHAT =========== //
+// ======================================================= //
+
 model Conversation {
-  id            String        @id @default(uuid())
-  createdAt     DateTime      @default(now())
-  participants  Participant[]
-  messages      Message[]
+  id        String    @id @default(uuid())
+  createdAt DateTime  @default(now())
+  messages  Message[]
+
+  // Apenas o operador da nossa plataforma é um link direto
+  operator   Profile  @relation("OperatorConversations", fields: [operatorId], references: [id], onDelete: Cascade)
+  operatorId String
+
+  // O outro participante é apenas um texto (ex: número de telefone)
+  externalParticipantIdentifier String
 }
 
-// Tabela de ligação para saber quem participa de qual conversa
-model Participant {
-  profile        Profile      @relation(fields: [profileId], references: [id], onDelete: Cascade)
-  profileId      String
-  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  conversationId String
-
-  @@id([profileId, conversationId])
-}
-
-// Modelo para uma mensagem individual
 model Message {
   id             String       @id @default(uuid())
   content        String
   createdAt      DateTime     @default(now())
-  sender         Profile      @relation("Sender", fields: [senderId], references: [id], onDelete: Cascade)
-  senderId       String
+
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   conversationId String
+
+  // Campo que define a origem da mensagem: do nosso operador ou do contato externo
+  source         MessageSource
+
+  // O sender SÓ é preenchido se a mensagem veio do nosso operador.
+  // Se veio do contato externo, este campo fica nulo.
+  operatorSender   Profile?     @relation("OperatorSentMessages", fields: [operatorSenderId], references: [id], onDelete: SetNull)
+  operatorSenderId String?
+}
+
+// Enum para definir a origem da mensagem
+enum MessageSource {
+  OPERATOR  // Enviada pelo nosso operador da plataforma
+  EXTERNAL  // Recebida do contato externo
 }
