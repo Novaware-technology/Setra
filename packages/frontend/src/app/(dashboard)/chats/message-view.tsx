@@ -10,7 +10,7 @@ import { useAuth } from '@/contexts/uth-context';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Download } from 'lucide-react';
 
 async function fetchMessages(conversationId: string) {
   return api(`/conversations/${conversationId}/messages`);
@@ -41,6 +41,53 @@ export function MessageView({
     enabled: !!conversationId,
   });
 
+  const handleExportConversation = () => {
+    if (!conversation || !messages) return;
+    
+    // Cabeçalho do CSV
+    const headers = [
+      'Data/Hora',
+      'Origem',
+      'Operador',
+      'Mensagem'
+    ];
+    
+    // Dados das mensagens
+    const csvData = messages.map((message: any) => [
+      new Date(message.createdAt).toLocaleString('pt-BR'),
+      message.source === 'OPERATOR' ? 'Operador' : 'Cliente',
+      message.operatorSender?.name || '',
+      `"${message.content.replace(/"/g, '""')}"` // Escapa aspas duplas
+    ]);
+    
+    // Combina cabeçalho com dados
+    const csvContent = [
+      headers.join(','),
+      ...csvData.map((row: any) => row.join(','))
+    ].join('\n');
+    
+    // Adiciona informações da conversa no início
+    const [name, phone] = conversation.externalParticipantIdentifier.split(';');
+    const formattedPhone = phone ? `+55 (${phone.slice(2, 4)}) ${phone.slice(4, 9)}-${phone.slice(9)}` : '';
+    const fullCsvContent = [
+      `Conversa: ${formattedPhone} - ${name}`,
+      `Data de Criação: ${new Date(conversation.createdAt).toLocaleString('pt-BR')}`,
+      `Exportado em: ${new Date().toLocaleString('pt-BR')}`,
+      '',
+      csvContent
+    ].join('\n');
+
+    const blob = new Blob([fullCsvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `conversa-${conversation.externalParticipantIdentifier.split(';')[1] || conversation.id}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   if (!conversationId) {
     return (
       <div className="flex flex-col h-full">
@@ -61,7 +108,7 @@ export function MessageView({
     return (
       <div className="flex flex-col h-full">
         <div className="p-4 border-b">
-          <h2 className="font-semibold text-base md:text-lg">
+          <h2 className="font-semibold text-sm md:text-base">
             {conversation?.externalParticipantIdentifier ? (() => {
               const [name, phone] = conversation.externalParticipantIdentifier.split(';');
               const formattedPhone = phone ? `+55 (${phone.slice(2, 4)}) ${phone.slice(4, 9)}-${phone.slice(9)}` : '';
@@ -105,29 +152,51 @@ export function MessageView({
     <div className="flex flex-col h-full">
       {/* Cabeçalho da Conversa */}
       <div className="p-4 border-b">
-        <div className="flex items-center gap-3">
-          {onBackToList && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onBackToList}
-              className="p-1 h-8 w-8"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {onBackToList && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onBackToList}
+                className="p-1 h-8 w-8"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            )}
+            <h2 className="font-semibold text-base md:text-lg">
+              {conversation?.externalParticipantIdentifier ? (() => {
+                const [name, phone] = conversation.externalParticipantIdentifier.split(';');
+                const formattedPhone = phone ? `+55 (${phone.slice(2, 4)}) ${phone.slice(4, 9)}-${phone.slice(9)}` : '';
+                return (
+                  <span>
+                    <span className="font-semibold">{formattedPhone}</span>
+                    <span className="text-sm font-medium text-muted-foreground ml-2">- {name}</span>
+                  </span>
+                );
+              })() : 'Conversa'}
+            </h2>
+          </div>
+          
+          {conversationId && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleExportConversation}
+                    className="p-1 h-8 w-8"
+                  >
+                    <Download className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="bg-black text-white border-gray-600">
+                  <p>Exportar conversa para CSV</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           )}
-          <h2 className="font-semibold text-base md:text-lg">
-            {conversation?.externalParticipantIdentifier ? (() => {
-              const [name, phone] = conversation.externalParticipantIdentifier.split(';');
-              const formattedPhone = phone ? `+55 (${phone.slice(2, 4)}) ${phone.slice(4, 9)}-${phone.slice(9)}` : '';
-              return (
-                <span>
-                  <span className="font-semibold">{formattedPhone}</span>
-                  <span className="text-sm font-medium text-muted-foreground ml-2">- {name}</span>
-                </span>
-              );
-            })() : 'Conversa'}
-          </h2>
         </div>
       </div>
 
