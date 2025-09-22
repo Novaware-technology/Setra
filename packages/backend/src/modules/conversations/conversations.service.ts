@@ -15,7 +15,7 @@ export class ConversationsService {
    * - Admin/Support: veem todas.
    */
   async findAll(currentUser: any) {
-    const isOperador = currentUser.roles.includes('operador');
+    const isOperador = currentUser.roles.includes('operator');
 
     return this.prisma.conversation.findMany({
       where: isOperador
@@ -33,7 +33,7 @@ export class ConversationsService {
    * - Admin/Support: podem ver qualquer uma.
    */
   async findMessages(conversationId: string, currentUser: any) {
-    const isOperador = currentUser.roles.includes('operador');
+    const isOperador = currentUser.roles.includes('operator');
 
     // 1. Busca a conversa para garantir que ela existe
     const conversation = await this.prisma.conversation.findUnique({
