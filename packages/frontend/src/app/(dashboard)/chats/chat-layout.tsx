@@ -11,7 +11,10 @@ import {
 import { ConversationList } from './conversation-list';
 import { MessageView } from './message-view';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { ArrowLeft, MessageSquare, Users } from 'lucide-react';
 
 export function ChatLayout() {
   const searchParams = useSearchParams();
@@ -73,41 +76,73 @@ export function ChatLayout() {
   // Layout para mobile
   if (isMobile) {
     return (
-      <div className="h-full max-h-screen">
+      <div className="h-full max-h-screen bg-gradient-to-br from-background to-muted/20">
+        <Card className="h-full border-0 shadow-none bg-transparent">
+          <CardContent className="p-0 h-full">
             {showConversationList ? (
-              <ConversationList
-                selectedConversationId={selectedConversationId}
-                onSelectConversation={handleSelectConversation}
-              />
+              <div className="h-full flex flex-col">
+                <div className="p-4 border-b bg-card/50 backdrop-blur-sm">
+                  <div className="flex items-center gap-2">
+                    <MessageSquare className="h-5 w-5 text-primary" />
+                    <h2 className="font-semibold text-lg">Conversas</h2>
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <ConversationList
+                    selectedConversationId={selectedConversationId}
+                    onSelectConversation={handleSelectConversation}
+                  />
+                </div>
+              </div>
             ) : (
               <MessageView
                 conversationId={selectedConversationId}
                 onBackToList={handleBackToList}
               />
             )}
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   // Layout para desktop
   return (
-    <ResizablePanelGroup
-      direction="horizontal"
-      className="h-full max-h-screen items-stretch"
-    >
-          <ResizablePanel defaultSize={25} minSize={20}>
-            <ConversationList
-              selectedConversationId={selectedConversationId}
-              onSelectConversation={handleSelectConversation}
-            />
-          </ResizablePanel>
-      <ResizableHandle withHandle />
-      <ResizablePanel defaultSize={75}>
-        <MessageView 
-          conversationId={selectedConversationId} 
-          onBackToList={undefined}
-        />
-      </ResizablePanel>
-    </ResizablePanelGroup>
+    <div className="h-full max-h-screen bg-gradient-to-br from-background to-muted/20">
+      <Card className="h-full border-0 shadow-none bg-transparent">
+        <CardContent className="p-0 h-full">
+          <ResizablePanelGroup
+            direction="horizontal"
+            className="h-full items-stretch"
+          >
+            <ResizablePanel defaultSize={25} minSize={20} maxSize={40}>
+              <div className="h-full flex flex-col border-r bg-card/30 backdrop-blur-sm">
+                <div className="p-4 border-b bg-card/50 flex-shrink-0">
+                  <div className="flex items-center gap-2">
+                    <MessageSquare className="h-5 w-5 text-primary" />
+                    <h2 className="font-semibold text-lg">Conversas</h2>
+                  </div>
+                </div>
+                <div className="flex-1 min-h-0">
+                  <ConversationList
+                    selectedConversationId={selectedConversationId}
+                    onSelectConversation={handleSelectConversation}
+                  />
+                </div>
+              </div>
+            </ResizablePanel>
+            <ResizableHandle withHandle className="bg-border/50 hover:bg-border transition-colors" />
+            <ResizablePanel defaultSize={75}>
+              <div className="h-full bg-card/20 backdrop-blur-sm">
+                <MessageView 
+                  conversationId={selectedConversationId} 
+                  onBackToList={undefined}
+                />
+              </div>
+            </ResizablePanel>
+          </ResizablePanelGroup>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

@@ -10,7 +10,10 @@ import { useAuth } from '@/contexts/uth-context';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Download } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { ArrowLeft, Download, MessageSquare, User, Bot } from 'lucide-react';
 
 async function fetchMessages(conversationId: string) {
   return api(`/conversations/${conversationId}/messages`);
@@ -151,7 +154,7 @@ export function MessageView({
   return (
     <div className="flex flex-col h-full max-h-screen">
       {/* Cabeçalho da Conversa */}
-      <div className="p-4 border-b flex-shrink-0">
+      <div className="p-4 border-b flex-shrink-0 bg-card/50 backdrop-blur-sm">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             {onBackToList && (
@@ -159,23 +162,25 @@ export function MessageView({
                 variant="ghost"
                 size="sm"
                 onClick={onBackToList}
-                className="p-1 h-8 w-8"
+                className="p-1 h-8 w-8 hover:bg-primary/10"
               >
                 <ArrowLeft className="h-4 w-4" />
               </Button>
             )}
-            <h2 className="font-semibold text-base md:text-lg">
-              {conversation?.externalParticipantIdentifier ? (() => {
-                const [name, phone] = conversation.externalParticipantIdentifier.split(';');
-                const formattedPhone = phone ? `+55 (${phone.slice(2, 4)}) ${phone.slice(4, 9)}-${phone.slice(9)}` : '';
-                return (
-                  <span>
-                    <span className="font-semibold">{formattedPhone}</span>
-                    <span className="text-sm font-medium text-muted-foreground ml-2">- {name}</span>
-                  </span>
-                );
-              })() : 'Conversa'}
-            </h2>
+            <div className="flex items-center gap-2">
+              <h2 className="font-semibold text-base md:text-lg">
+                {conversation?.externalParticipantIdentifier ? (() => {
+                  const [name, phone] = conversation.externalParticipantIdentifier.split(';');
+                  const formattedPhone = phone ? `+55 (${phone.slice(2, 4)}) ${phone.slice(4, 9)}-${phone.slice(9)}` : '';
+                  return (
+                    <span>
+                      <span className="font-semibold">{formattedPhone}</span>
+                      <span className="text-sm font-medium text-muted-foreground ml-2">- {name}</span>
+                    </span>
+                  );
+                })() : 'Conversa'}
+              </h2>
+            </div>
           </div>
           
           {conversationId && (
