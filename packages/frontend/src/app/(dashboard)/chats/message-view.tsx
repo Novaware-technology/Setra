@@ -9,6 +9,8 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/uth-context';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft } from 'lucide-react';
 
 async function fetchMessages(conversationId: string) {
   return api(`/conversations/${conversationId}/messages`);
@@ -19,7 +21,13 @@ async function fetchConversation(conversationId: string) {
   return conversations.find((conv: any) => conv.id === conversationId);
 }
 
-export function MessageView({ conversationId }: { conversationId: string | null }) {
+export function MessageView({ 
+  conversationId, 
+  onBackToList 
+}: { 
+  conversationId: string | null;
+  onBackToList?: () => void;
+}) {
   const { user } = useAuth();
   const { data: messages, isLoading, error } = useQuery({
     queryKey: ['messages', conversationId],
@@ -53,7 +61,7 @@ export function MessageView({ conversationId }: { conversationId: string | null 
     return (
       <div className="flex flex-col h-full">
         <div className="p-4 border-b">
-          <h2 className="font-semibold">
+          <h2 className="font-semibold text-base md:text-lg">
             {conversation?.externalParticipantIdentifier ? (() => {
               const [name, phone] = conversation.externalParticipantIdentifier.split(';');
               const formattedPhone = phone ? `+55 (${phone.slice(2, 4)}) ${phone.slice(4, 9)}-${phone.slice(9)}` : '';
@@ -75,7 +83,7 @@ export function MessageView({ conversationId }: { conversationId: string | null 
     return (
       <div className="flex flex-col h-full">
         <div className="p-4 border-b">
-          <h2 className="font-semibold">
+          <h2 className="font-semibold text-base md:text-lg">
             {conversation?.externalParticipantIdentifier ? (() => {
               const [name, phone] = conversation.externalParticipantIdentifier.split(';');
               const formattedPhone = phone ? `+55 (${phone.slice(2, 4)}) ${phone.slice(4, 9)}-${phone.slice(9)}` : '';
@@ -97,18 +105,30 @@ export function MessageView({ conversationId }: { conversationId: string | null 
     <div className="flex flex-col h-full">
       {/* Cabeçalho da Conversa */}
       <div className="p-4 border-b">
-        <h2 className="font-semibold">
-          {conversation?.externalParticipantIdentifier ? (() => {
-            const [name, phone] = conversation.externalParticipantIdentifier.split(';');
-            const formattedPhone = phone ? `+55 (${phone.slice(2, 4)}) ${phone.slice(4, 9)}-${phone.slice(9)}` : '';
-            return (
-              <span>
-                <span className="font-semibold">{formattedPhone}</span>
-                <span className="text-sm font-medium text-muted-foreground ml-2">- {name}</span>
-              </span>
-            );
-          })() : 'Conversa'}
-        </h2>
+        <div className="flex items-center gap-3">
+          {onBackToList && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onBackToList}
+              className="p-1 h-8 w-8"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          )}
+          <h2 className="font-semibold text-base md:text-lg">
+            {conversation?.externalParticipantIdentifier ? (() => {
+              const [name, phone] = conversation.externalParticipantIdentifier.split(';');
+              const formattedPhone = phone ? `+55 (${phone.slice(2, 4)}) ${phone.slice(4, 9)}-${phone.slice(9)}` : '';
+              return (
+                <span>
+                  <span className="font-semibold">{formattedPhone}</span>
+                  <span className="text-sm font-medium text-muted-foreground ml-2">- {name}</span>
+                </span>
+              );
+            })() : 'Conversa'}
+          </h2>
+        </div>
       </div>
 
       {/* Área das Mensagens */}

@@ -39,7 +39,7 @@ export function ConversationList({
     return (
       <div className="flex flex-col">
         <div className="p-4 pb-2">
-          <h2 className="font-semibold text-lg">Conversas</h2>
+          <h2 className="font-semibold text-base md:text-lg">Conversas</h2>
         </div>
         <div className="p-4 text-center text-muted-foreground">
           <p className="text-xs mt-2">As conversas aparecerão aqui quando forem iniciadas</p>
@@ -51,7 +51,7 @@ export function ConversationList({
   return (
     <div className="flex flex-col">
       <div className="p-4 pb-2">
-        <h2 className="font-semibold text-lg">Conversas</h2>
+        <h2 className="font-semibold text-base md:text-lg">Conversas</h2>
       </div>
       <div className="flex flex-col gap-2 p-4 pt-0">
         {conversations?.map((convo: any) => (
