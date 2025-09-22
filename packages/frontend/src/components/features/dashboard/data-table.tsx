@@ -223,9 +223,19 @@ export function DataTable({
     {
       accessorKey: "name",
       header: "Nome",
-      // cell: ({ row }) => {
-      //   return <TableCellViewer item={row.original} />
-      // },
+      cell: ({ row }) => {
+        const isCurrentUser = user?.id === row.original.id;
+        return (
+          <div className="flex items-center gap-2">
+            <span>{row.original.name}</span>
+            {isCurrentUser && (
+              <Badge variant="secondary" className="text-xs">
+                Você
+              </Badge>
+            )}
+          </div>
+        );
+      },
       enableHiding: false,
     },
     {
@@ -909,17 +919,33 @@ const chartConfig = {
 
 function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
   const isMobile = useIsMobile()
+  const { user } = useAuth()
+  const isCurrentUser = user?.id === item.id
 
   return (
     <Drawer direction={isMobile ? "bottom" : "right"}>
       <DrawerTrigger asChild>
         <Button variant="link" className="text-foreground w-fit px-0 text-left">
-          {item.name}
+          <div className="flex items-center gap-2">
+            <span>{item.name}</span>
+            {isCurrentUser && (
+              <Badge variant="secondary" className="text-xs">
+                Você
+              </Badge>
+            )}
+          </div>
         </Button>
       </DrawerTrigger>
       <DrawerContent>
         <DrawerHeader className="gap-1">
-          <DrawerTitle>{item.name}</DrawerTitle>
+          <DrawerTitle className="flex items-center gap-2">
+            {item.name}
+            {isCurrentUser && (
+              <Badge variant="secondary" className="text-xs">
+                Você
+              </Badge>
+            )}
+          </DrawerTitle>
           <DrawerDescription>
             Detalhes do usuário
           </DrawerDescription>
