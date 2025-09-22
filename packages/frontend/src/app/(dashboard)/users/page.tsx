@@ -1,15 +1,14 @@
 // src/app/(dashboard)/users/page.tsx
+"use client"
+
 import { UserTable } from "@/app/(dashboard)/users/user-table";
 import { Button } from "@/components/ui/button";
+import { RouteGuard } from "@/components/auth/route-guard";
 
 export default function UsersPage() {
   return (
+    <RouteGuard requiredRoles={['admin', 'support']}>
       <UserTable />
-    // <div className="space-y-4">
-    //   <div className="flex justify-between items-center">
-    //     <h1 className="text-2xl font-bold">Gerenciamento de Usuários</h1>
-    //     <Button>Criar Novo Usuário</Button>
-    //   </div>
-    // </div>
+    </RouteGuard>
   );
 }

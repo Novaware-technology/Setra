@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/sidebar"
 import Link from "next/link"
 import { useAuth } from "@/contexts/uth-context"
+import { usePermissions } from "@/hooks/use-permissions"
 
 const data = {
   navMain: [
@@ -42,16 +43,19 @@ const data = {
       title: "Dashboard",
       url: "/",
       icon: IconDashboard,
+      requiredRoles: ['admin', 'support'],
     },
     {
       title: "Team",
       url: "/users",
       icon: IconUsers,
+      requiredRoles: ['admin', 'support'],
     },
     {
       title: "Histórico de Conversas",
       url: "/chats",
       icon: IconMessages,
+      requiredRoles: ['admin', 'support', 'operator'],
     },
   ],
   navClouds: [
@@ -140,6 +144,13 @@ const data = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user } = useAuth();
+  const { hasAnyRole } = usePermissions();
+
+  // Filtra os itens baseado nas permissões do usuário
+  const filteredNavMain = data.navMain.filter(item => 
+    hasAnyRole(item.requiredRoles)
+  );
+
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
@@ -158,7 +169,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <NavMain items={filteredNavMain} />
         {/* <NavDocuments items={data.documents} /> */}
         {/* <NavSecondary items={data.navSecondary} className="mt-auto" /> */}
       </SidebarContent>
