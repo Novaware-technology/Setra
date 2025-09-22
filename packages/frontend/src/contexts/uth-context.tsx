@@ -24,6 +24,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
+  isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
 }
@@ -34,29 +35,42 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 // 3. O Componente "Provedor" que vai gerenciar toda a lógica
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
   // Efeito que roda quando o app carrega para verificar se já existe um token
   useEffect(() => {
     const initializeAuth = async () => {
-      const token = localStorage.getItem('authToken');
-      if (token) {
-        try {
-          const decodedToken: { sub: string; email: string; roles: string[] } = jwtDecode(token);
-          const userData = await me(token);
-          setUser({ 
-            id: userData.id, 
-            email: userData.email, 
-            name: userData.name, 
-            selected_theme: userData.selected_theme,
-            roles: decodedToken.roles 
-          });
-        } catch (error) {
-          console.error('Erro ao decodificar o token:', error);
-          // Se o token for inválido, limpa tudo
-          localStorage.removeItem('authToken');
+      try {
+        // Verifica se está no cliente antes de acessar localStorage
+        if (typeof window === 'undefined') {
+          setIsLoading(false);
+          return;
+        }
+
+        const token = localStorage.getItem('authToken');
+        if (token) {
+          try {
+            const decodedToken: { sub: string; email: string; roles: string[] } = jwtDecode(token);
+            const userData = await me(token);
+            setUser({ 
+              id: userData.id, 
+              email: userData.email, 
+              name: userData.name, 
+              selected_theme: userData.selected_theme,
+              roles: decodedToken.roles 
+            });
+          } catch (error) {
+            console.error('Erro ao decodificar o token:', error);
+            // Se o token for inválido, limpa tudo
+            localStorage.removeItem('authToken');
+            setUser(null);
+          }
+        } else {
           setUser(null);
         }
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -119,6 +133,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const value = {
     user,
     isAuthenticated: !!user,
+    isLoading,
     login,
     logout,
   };
