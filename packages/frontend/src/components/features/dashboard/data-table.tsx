@@ -142,7 +142,7 @@ function DragHandle({ id }: { id: string }) {
       className="text-muted-foreground size-7 hover:bg-transparent"
     >
       <IconGripVertical className="text-muted-foreground size-3" />
-      <span className="sr-only">Drag to reorder</span>
+      <span className="sr-only">Arrastar para reordenar</span>
     </Button>
   )
 }
@@ -218,9 +218,9 @@ export function DataTable({
     {
       accessorKey: "name",
       header: "Nome",
-      cell: ({ row }) => {
-        return <TableCellViewer item={row.original} />
-      },
+      // cell: ({ row }) => {
+      //   return <TableCellViewer item={row.original} />
+      // },
       enableHiding: false,
     },
     {
@@ -271,7 +271,7 @@ export function DataTable({
               size="icon"
             >
               <IconDotsVertical />
-              <span className="sr-only">Open menu</span>
+              <span className="sr-only">Abrir menu</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-32">
@@ -651,7 +651,7 @@ export function DataTable({
                       colSpan={columns.length}
                       className="h-24 text-center"
                     >
-                      No results.
+                      Nenhum resultado.
                     </TableCell>
                   </TableRow>
                 )}
@@ -663,7 +663,7 @@ export function DataTable({
           <div className="flex w-full items-center gap-8 lg:w-fit">
             <div className="hidden items-center gap-2 lg:flex">
               <Label htmlFor="rows-per-page" className="text-sm font-medium">
-                Rows per page
+                Linhas por página
               </Label>
               <Select
                 value={`${table.getState().pagination.pageSize}`}
@@ -686,7 +686,7 @@ export function DataTable({
               </Select>
             </div>
             <div className="flex w-fit items-center justify-center text-sm font-medium">
-              Page {table.getState().pagination.pageIndex + 1} of{" "}
+              Página {table.getState().pagination.pageIndex + 1} de{" "}
               {table.getPageCount()}
             </div>
             <div className="ml-auto flex items-center gap-2 lg:ml-0">
@@ -696,7 +696,7 @@ export function DataTable({
                 onClick={() => table.setPageIndex(0)}
                 disabled={!table.getCanPreviousPage()}
               >
-                <span className="sr-only">Go to first page</span>
+                <span className="sr-only">Ir para primeira página</span>
                 <IconChevronsLeft />
               </Button>
               <Button
@@ -706,7 +706,7 @@ export function DataTable({
                 onClick={() => table.previousPage()}
                 disabled={!table.getCanPreviousPage()}
               >
-                <span className="sr-only">Go to previous page</span>
+                <span className="sr-only">Ir para página anterior</span>
                 <IconChevronLeft />
               </Button>
               <Button
@@ -716,7 +716,7 @@ export function DataTable({
                 onClick={() => table.nextPage()}
                 disabled={!table.getCanNextPage()}
               >
-                <span className="sr-only">Go to next page</span>
+                <span className="sr-only">Ir para próxima página</span>
                 <IconChevronRight />
               </Button>
               <Button
@@ -726,7 +726,7 @@ export function DataTable({
                 onClick={() => table.setPageIndex(table.getPageCount() - 1)}
                 disabled={!table.getCanNextPage()}
               >
-                <span className="sr-only">Go to last page</span>
+                <span className="sr-only">Ir para última página</span>
                 <IconChevronsRight />
               </Button>
             </div>
@@ -927,13 +927,13 @@ function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
               <Separator />
               <div className="grid gap-2">
                 <div className="flex gap-2 leading-none font-medium">
-                  Trending up by 5.2% this month{" "}
+                  Crescimento de 5,2% este mês{" "}
                   <IconTrendingUp className="size-4" />
                 </div>
                 <div className="text-muted-foreground">
-                  Showing total visitors for the last 6 months. This is just
-                  some random text to test the layout. It spans multiple lines
-                  and should wrap around.
+                  Mostrando total de visitantes dos últimos 6 meses. Este é apenas
+                  um texto de exemplo para testar o layout. Ele se estende por múltiplas linhas
+                  e deve quebrar adequadamente.
                 </div>
               </div>
               <Separator />
