@@ -6,6 +6,7 @@ import {
   IconChartBar,
   IconDashboard,
   IconDatabase,
+  IconMessages,
   IconFileAi,
   IconFileDescription,
   IconFileWord,
@@ -51,6 +52,11 @@ const data = {
       title: "Team",
       url: "/users",
       icon: IconUsers,
+    },
+    {
+      title: "Chats",
+      url: "/chats",
+      icon: IconMessages,
     },
   ],
   navClouds: [
