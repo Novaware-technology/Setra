@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import {
   ResizableHandle,
   ResizablePanel,
@@ -13,6 +14,8 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 
 export function ChatLayout() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   const [showConversationList, setShowConversationList] = useState(true);
@@ -28,6 +31,14 @@ export function ChatLayout() {
 
     return () => window.removeEventListener('resize', checkIsMobile);
   }, []);
+
+  // Detectar parâmetro de conversa na URL
+  useEffect(() => {
+    const conversationParam = searchParams.get('conversation');
+    if (conversationParam) {
+      setSelectedConversationId(conversationParam);
+    }
+  }, [searchParams]);
 
   // Lógica para mostrar/ocultar painéis no mobile
   useEffect(() => {
@@ -45,23 +56,35 @@ export function ChatLayout() {
   const handleBackToList = () => {
     setSelectedConversationId(null);
     setShowConversationList(true);
+    // Limpar parâmetro da URL
+    router.push('/chats');
+  };
+
+  const handleSelectConversation = (conversationId: string | null) => {
+    setSelectedConversationId(conversationId);
+    // Atualizar URL com o ID da conversa
+    if (conversationId) {
+      router.push(`/chats?conversation=${conversationId}`);
+    } else {
+      router.push('/chats');
+    }
   };
 
   // Layout para mobile
   if (isMobile) {
     return (
       <div className="h-full max-h-screen">
-        {showConversationList ? (
-          <ConversationList
-            selectedConversationId={selectedConversationId}
-            onSelectConversation={setSelectedConversationId}
-          />
-        ) : (
-          <MessageView 
-            conversationId={selectedConversationId} 
-            onBackToList={handleBackToList}
-          />
-        )}
+            {showConversationList ? (
+              <ConversationList
+                selectedConversationId={selectedConversationId}
+                onSelectConversation={handleSelectConversation}
+              />
+            ) : (
+              <MessageView
+                conversationId={selectedConversationId}
+                onBackToList={handleBackToList}
+              />
+            )}
       </div>
     );
   }
@@ -72,12 +95,12 @@ export function ChatLayout() {
       direction="horizontal"
       className="h-full max-h-screen items-stretch"
     >
-      <ResizablePanel defaultSize={25} minSize={20}>
-        <ConversationList
-          selectedConversationId={selectedConversationId}
-          onSelectConversation={setSelectedConversationId}
-        />
-      </ResizablePanel>
+          <ResizablePanel defaultSize={25} minSize={20}>
+            <ConversationList
+              selectedConversationId={selectedConversationId}
+              onSelectConversation={handleSelectConversation}
+            />
+          </ResizablePanel>
       <ResizableHandle withHandle />
       <ResizablePanel defaultSize={75}>
         <MessageView 

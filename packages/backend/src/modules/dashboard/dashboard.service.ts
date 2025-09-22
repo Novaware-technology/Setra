@@ -192,7 +192,7 @@ export class DashboardService {
         lastMessageTime: conversation.messages[0]?.createdAt || conversation.createdAt,
         operator: conversation.operator?.name || 'Não atribuído',
         messageCount: conversation._count.messages,
-        status: conversation.messages[0] ? 'active' : 'inactive',
+        status: 'closed',
         createdAt: conversation.createdAt,
       };
     });

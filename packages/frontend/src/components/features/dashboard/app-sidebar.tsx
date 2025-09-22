@@ -49,7 +49,7 @@ const data = {
       icon: IconUsers,
     },
     {
-      title: "Chats",
+      title: "Histórico de Conversas",
       url: "/chats",
       icon: IconMessages,
     },

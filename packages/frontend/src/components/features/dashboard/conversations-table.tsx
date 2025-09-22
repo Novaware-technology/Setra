@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { useQuery } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
 import {
   IconChevronDown,
   IconChevronLeft,
@@ -66,7 +67,7 @@ interface ConversationSummary {
   lastMessageTime: string;
   operator: string;
   messageCount: number;
-  status: 'active' | 'inactive';
+  status: 'closed';
   createdAt: string;
 }
 
@@ -75,6 +76,7 @@ async function fetchConversations() {
 }
 
 export function ConversationsTable() {
+  const router = useRouter();
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [sorting, setSorting] = React.useState<SortingState>([])
@@ -182,8 +184,8 @@ export function ConversationsTable() {
       accessorKey: "status",
       header: "Status",
       cell: ({ row }) => (
-        <Badge variant={row.original.status === 'active' ? 'default' : 'secondary'}>
-          {row.original.status === 'active' ? 'Ativa' : 'Inativa'}
+        <Badge variant="secondary">
+          Encerrada
         </Badge>
       ),
     },
@@ -214,7 +216,7 @@ export function ConversationsTable() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-40">
-            <DropdownMenuItem onClick={() => window.open(`/chats`, '_blank')}>
+            <DropdownMenuItem onClick={() => router.push(`/chats?conversation=${row.original.id}`)}>
               <IconEye className="mr-2 h-4 w-4" />
               Ver Conversa
             </DropdownMenuItem>
