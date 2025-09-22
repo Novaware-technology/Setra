@@ -21,7 +21,15 @@ export class AuthService {
   }
 
   async login(user: any) {
-    const payload = { sub: user.id, email: user.email };
+    // Buscamos os perfis do usuário no momento do login
+    const userWithRoles = await this.prisma.profile.findUnique({
+      where: { id: user.id },
+      include: { userRoles: { include: { role: true } } },
+    });
+    const roles = userWithRoles?.userRoles.map((ur) => ur.role.name) ?? [];
+
+    // Adicionamos os perfis ao payload do token
+    const payload = { sub: user.id, email: user.email, roles: roles };
     return {
       access_token: this.jwtService.sign(payload),
     };

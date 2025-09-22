@@ -1,4 +1,4 @@
-import { Injectable, ConflictException, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, ConflictException, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { PrismaService } from '../../shared/prisma/prisma.service';
@@ -83,47 +83,105 @@ export class UsersService {
     return user;
   }
 
-   // NOVO: Implementação do update
-   async update(id: string, updateUserDto: UpdateUserDto) {
-    // Primeiro, verifica se o usuário existe
-    await this.findOne(id);
+  // `findMySelf` para o operator
+  async findMySelf(currentUser: any) {
+    return this.findOne(currentUser.userId);
+  }
 
-    // Se uma nova senha for fornecida, criptografa-a
-    if (updateUserDto.password) {
-      const saltRounds = 10;
-      updateUserDto.password = await bcrypt.hash(
-        updateUserDto.password,
-        saltRounds,
-      );
+  async update(id: string, updateUserDto: UpdateUserDto, currentUser: any) {
+    const { role: newRoleName, ...profileData } = updateUserDto;
+
+    const userToUpdate = await this.prisma.profile.findUnique({
+      where: { id },
+      include: { userRoles: { include: { role: true } } },
+    });
+
+    if (!userToUpdate) {
+      throw new NotFoundException(`Usuário com ID "${id}" não encontrado.`);
+    }
+
+    console.log(currentUser);
+    console.log(userToUpdate);
+
+    const userToUpdateRoles = userToUpdate.userRoles.map((ur) => ur.role.name);
+    const isCurrentUserAnOperator = currentUser.roles.includes('operator');
+    const isCurrentUserASupport = currentUser.roles.includes('support');
+
+    // REGRA: Operator só pode atualizar a si mesmo
+    if (isCurrentUserAnOperator && currentUser.userId !== id) {
+      throw new ForbiddenException('Você não tem permissão para atualizar este usuário.');
+    }
+
+    // REGRA: Operator não pode mudar o perfil (role)
+    if (isCurrentUserAnOperator && newRoleName) {
+      throw new ForbiddenException('Você não tem permissão para alterar seu perfil.');
+    }
+
+    // REGRA: Support não pode atualizar um admin
+    if (isCurrentUserASupport && userToUpdateRoles.includes('admin')) {
+      throw new ForbiddenException('Você não tem permissão para atualizar um administrador.');
     }
     
-    // Renomeia 'password' para 'passwordHash' para corresponder ao schema
-    const { password, ...data } = updateUserDto;
+    // Se uma nova senha for fornecida, criptografa-a
+    if (profileData.password) {
+      const saltRounds = 10;
+      profileData.password = await bcrypt.hash(profileData.password, saltRounds);
+    }
+    const { password, ...data } = profileData;
     const dataToUpdate: any = { ...data };
     if (password) {
       dataToUpdate.passwordHash = password;
     }
 
-    const updatedUser = await this.prisma.profile.update({
-      where: { id },
-      data: dataToUpdate,
-      select: this.userSelect,
-    });
+    // Executa as atualizações em uma transação para garantir a integridade
+    return this.prisma.$transaction(async (tx) => {
+      // 1. Atualiza os dados do perfil (nome, senha, etc.)
+      const updatedUser = await tx.profile.update({
+        where: { id },
+        data: dataToUpdate,
+        select: this.userSelect,
+      });
 
-    return updatedUser;
+      // 2. Se um novo perfil foi informado, atualiza a tabela UserRole
+      if (newRoleName) {
+        const role = await tx.role.findUnique({ where: { name: newRoleName } });
+        if (!role) {
+          throw new BadRequestException(`O perfil "${newRoleName}" não existe.`);
+        }
+
+        // Apaga o perfil antigo e cria o novo
+        await tx.userRole.deleteMany({ where: { profileId: id } });
+        await tx.userRole.create({
+          data: {
+            profileId: id,
+            roleId: role.id,
+          },
+        });
+      }
+      return updatedUser;
+    });
   }
 
   // NOVO: Implementação do remove
-  async remove(id: string) {
-    // Primeiro, verifica se o usuário existe
-    await this.findOne(id);
-
-    // Deleta o usuário
-    await this.prisma.profile.delete({
+  async remove(id: string, currentUser: any) {
+    const userToRemove = await this.prisma.profile.findUnique({
       where: { id },
+      include: { userRoles: { include: { role: true } } },
     });
 
-    // Retorna uma confirmação ou nada (status 204 No Content)
+    if (!userToRemove) {
+      throw new NotFoundException(`Usuário com ID "${id}" não encontrado.`);
+    }
+
+    const userToRemoveRoles = userToRemove.userRoles.map(ur => ur.role.name);
+    const isCurrentUserASupport = currentUser.roles.includes('support');
+
+    // REGRA: Support não pode deletar um admin
+    if (isCurrentUserASupport && userToRemoveRoles.includes('admin')) {
+      throw new ForbiddenException('Você não tem permissão para deletar um administrador.');
+    }
+
+    await this.prisma.profile.delete({ where: { id } });
     return;
   }
 }
