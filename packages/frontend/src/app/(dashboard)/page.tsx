@@ -1,11 +1,8 @@
 import { AppSidebar } from "@/components/features/dashboard/app-sidebar"
 import { ChartAreaInteractive } from "@/components/features/dashboard/chart-area-interactive"
-import { DataTable } from "@/components/features/dashboard/data-table"
+import { ConversationsTable } from "@/components/features/dashboard/conversations-table"
 import { SectionCards } from "@/components/features/dashboard/section-cards"
 import { SiteHeader } from "@/components/features/dashboard/site-header"
-
-
-import data from "./data.json"
 
 export default function Page() {
   return (
@@ -16,7 +13,7 @@ export default function Page() {
         <div className="px-4 lg:px-6">
           <ChartAreaInteractive />
         </div>
-        <DataTable data={data} />
+        <ConversationsTable />
       </div>
     </div>
   </div>

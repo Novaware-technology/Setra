@@ -5,6 +5,7 @@ import { PrismaModule } from './shared/prisma/prisma.module';
 import { UsersModule } from './modules/users/users.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { ConversationsModule } from './modules/conversations/conversations.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { ConversationsModule } from './modules/conversations/conversations.modul
     UsersModule, 
     AuthModule,
     ConversationsModule,
+    DashboardModule,
   ],
   controllers: [AppController],
   providers: [AppService],
