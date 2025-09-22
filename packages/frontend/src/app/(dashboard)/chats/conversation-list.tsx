@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 async function fetchConversations() {
   return api('/conversations');
@@ -49,39 +50,43 @@ export function ConversationList({
   }
 
   return (
-    <div className="flex flex-col">
-      <div className="p-4 pb-2">
+    <div className="flex flex-col h-full max-h-screen">
+      <div className="p-4 pb-2 flex-shrink-0">
         <h2 className="font-semibold text-sm md:text-base">Conversas</h2>
       </div>
-      <div className="flex flex-col gap-2 p-4 pt-0">
-        {conversations?.map((convo: any) => (
-        <button
-          key={convo.id}
-          onClick={() => onSelectConversation(convo.id)}
-          className={cn(
-            'flex flex-col items-start gap-2 rounded-lg border p-3 text-left text-sm transition-all hover:bg-accent',
-            selectedConversationId === convo.id && 'bg-accent'
-          )}
-        >
-          <div className="flex w-full flex-col gap-1">
-            <div className="flex items-center">
-              <div className="flex items-center gap-2">
-                <div className="font-semibold">
-                  {(() => {
-                    const [name, phone] = convo.externalParticipantIdentifier.split(';');
-                    const formattedPhone = phone ? `+55 (${phone.slice(2, 4)}) ${phone.slice(4, 9)}-${phone.slice(9)}` : '';
-                    return <span className="font-semibold">{formattedPhone}</span>;
-                  })()}
+      <div className="flex-1 min-h-0">
+        <ScrollArea className="h-full">
+          <div className="flex flex-col gap-2 p-4 pt-0">
+            {conversations?.map((convo: any) => (
+            <button
+              key={convo.id}
+              onClick={() => onSelectConversation(convo.id)}
+              className={cn(
+                'flex flex-col items-start gap-2 rounded-lg border p-3 text-left text-sm transition-all hover:bg-accent',
+                selectedConversationId === convo.id && 'bg-accent'
+              )}
+            >
+              <div className="flex w-full flex-col gap-1">
+                <div className="flex items-center">
+                  <div className="flex items-center gap-2">
+                    <div className="font-semibold">
+                      {(() => {
+                        const [name, phone] = convo.externalParticipantIdentifier.split(';');
+                        const formattedPhone = phone ? `+55 (${phone.slice(2, 4)}) ${phone.slice(4, 9)}-${phone.slice(9)}` : '';
+                        return <span className="font-semibold">{formattedPhone}</span>;
+                      })()}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
+                  <span>Conversa iniciada em {new Date(convo.createdAt).toLocaleDateString()}</span>
+                  <span>{new Date(convo.createdAt).toLocaleTimeString()}</span>
                 </div>
               </div>
-            </div>
-            <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
-              <span>Conversa iniciada em {new Date(convo.createdAt).toLocaleDateString()}</span>
-              <span>{new Date(convo.createdAt).toLocaleTimeString()}</span>
-            </div>
+            </button>
+            ))}
           </div>
-        </button>
-        ))}
+        </ScrollArea>
       </div>
     </div>
   );
